@@ -1,0 +1,3 @@
+output_frames/*
+video/*
+best_ncnn_model/*
