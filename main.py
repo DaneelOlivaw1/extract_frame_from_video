@@ -1,25 +1,27 @@
 import os
-os.environ["YOLO_DEVICE"] = "gpu"
-os.environ["YOLO_VERBOSE"] = "False"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # 使用第一个GPU
-
+os.environ['YOLO_VERBOSE'] = str(False)
 
 import cv2
 from ultralytics import YOLO
 import numpy as np
 import tempfile
 from tqdm import tqdm
+from pathlib import Path
+
+# 设置环境变量
+os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # 使用第一个GPU
 
 # 加载YOLO模型
-model = YOLO("best.pt")
-model.to('cuda')  # 将模型移动到GPU
+MODEL_NAME = "best"
+model = YOLO(f"{MODEL_NAME}.pt")
 
-# 导出模型为NCNN格式
-model.export(format="ncnn", device=0)
+# 导出TensorRT模型（如果不存在）
+engine_model_path = Path(f"{MODEL_NAME}.engine")
+if not engine_model_path.exists():
+    model.export(format="engine", dynamic=True, half=True, device=0)
 
-
-# 加载导出的NCNN模型
-ncnn_model = YOLO("./best_ncnn_model")
+# 加载TensorRT模型
+engine_model = YOLO(f"{MODEL_NAME}.engine")
 
 # 设置视频文件夹和输出文件夹
 video_folder = "video"
@@ -64,22 +66,13 @@ for video_file in video_files:
             cv2.imwrite(temp_file, center_frame)
             
             # 运行推理
-            results = ncnn_model(temp_file, conf=0.2, device=0)
+            results = engine_model(temp_file, conf=0.2, device=0)
             
             # 检查是否有检测到的对象
             if results[0].boxes.shape[0] > 0:
                 # 如果检测到对象,保存帧
                 output_path = os.path.join(output_folder, f"frame_{frame_count:04d}.jpg")
                 cv2.imwrite(output_path, center_frame)
-                # tqdm.write(f"保存帧 {frame_count} 到 {output_path}")
-                
-                # # 打印检测信息
-                # for box in results[0].boxes:
-                #     tqdm.write(f"检测到目标: 置信度 {box.conf.item():.2f}, 类别 {results[0].names[int(box.cls.item())]}")
-                #     tqdm.write(f"边界框坐标 (xyxy): {box.xyxy.tolist()[0]}")
-            else:
-                # tqdm.write(f"帧 {frame_count}: 未检测到目标")
-                pass
             
             # 删除临时文件
             os.remove(temp_file)
