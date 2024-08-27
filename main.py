@@ -1,7 +1,6 @@
 import os
 os.environ['YOLO_VERBOSE'] = str(False)
 
-
 import cv2
 from ultralytics import YOLO
 import numpy as np
@@ -12,11 +11,18 @@ import torch
 
 from split import split_videos
 
-# 设置环境变量
+# 设置变量
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"  # 使用第一个GPU
 
-# 加载YOLO模型
 MODEL_NAME = "best"
+
+video_folder = "videos"
+split_video_folder = "split_videos"
+output_base_folder = "output_frames"
+
+
+
+# 加载YOLO模型
 model = YOLO(f"{MODEL_NAME}.pt")
 
 # 导出TensorRT模型（如果不存在）
@@ -26,11 +32,6 @@ if not engine_model_path.exists():
 
 # 加载TensorRT模型
 engine_model = YOLO(f"{MODEL_NAME}.engine")
-
-# 设置视频文件夹和输出文件夹
-video_folder = "videos"
-split_video_folder = "split_videos"
-output_base_folder = "output_frames"
 
 # 分割视频
 split_videos(video_folder, split_video_folder)
