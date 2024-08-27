@@ -1,7 +1,9 @@
 output_frames/*
-video/*
 best_ncnn_model/*
 best.engine
 best.onnx
 best_openvino_model/*
 best.torchscript
+split_videos/*
+videos/*
+__pycache__/*
