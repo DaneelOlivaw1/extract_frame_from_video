@@ -10,7 +10,6 @@ import concurrent.futures
 import torch
 import logging
 import traceback
-from PIL import Image
 
 from split import split_videos
 
@@ -25,7 +24,7 @@ split_video_folder = "split_videos"
 output_base_folder = "output_frames"
 debug_output_folder = "debug_output"
 total_frame_count = 0
-
+target_size = 640
 
 # 加载YOLO模型
 model = YOLO(f"{MODEL_NAME}.pt")
@@ -54,10 +53,7 @@ def process_frame(frame, frame_index, output_folder):
             if results and len(results) > 0 and len(results[0].boxes.cls) > 0:
                 output_path = os.path.join(output_folder, f"frame_{total_frame_count}.jpg")
                 # print(f"检测到目标，输出路径: {output_path}")
-                
-                # 使用PIL保存图像
                 cv2.imwrite(output_path, frame)
-                
                 total_frame_count += 1
             else:
                 # print(f"帧 {frame_index} 未检测到目标")
@@ -82,11 +78,10 @@ def process_video(video_file):
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
 
-    target_size = 640
-    start_x = (width - 640) // 2
-    start_y = (height - 640) // 2
-    end_x = start_x + 640
-    end_y = start_y + 640
+    start_x = (width - target_size) // 2
+    start_y = (height - target_size) // 2
+    end_x = start_x + target_size
+    end_y = start_y + target_size
 
     for frame_count in tqdm(range(total_frames), desc=f"处理 {video_file}", unit="帧"):
         try:
